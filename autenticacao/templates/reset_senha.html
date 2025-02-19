@@ -1,0 +1,71 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block conteudo %}
+
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redefinir Senha</title>
+    <style>
+        .error-message {
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<h2 style="color: white">Redefinir Senha</h2>
+    
+    {% if valid_token %}
+    <form method="post" id="resetForm">
+        {% csrf_token %}
+
+        <div>
+        <label for="nova_senha" style="color: white">Nova Senha:</label>
+        <input type="password" name="nova_senha" id="nova_senha" required>
+        </div>
+        <div>
+        <br>
+        <label for="confirmar_senha" style="color: white">Confirmar Senha:</label>
+        <input type="password" id="confirmar_senha" required>
+        </div>
+        <p id="senha-erro" style="color: white">As senhas não coincidem!</p>
+
+        <button type="submit" id="submit-btn" style="color: white" disabled>Redefinir</button>
+    </form>
+    {% else %}
+    <p>O link de redefinição de senha é inválido ou expirou.</p>
+    {% endif %}
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const senhaInput = document.getElementById("nova_senha");
+            const confirmarSenhaInput = document.getElementById("confirmar_senha");
+            const erroMessage = document.getElementById("senha-erro");
+            const submitButton = document.getElementById("submit-btn");
+
+            function validarSenhas() {
+                if (senhaInput.value && confirmarSenhaInput.value) {
+                    if (senhaInput.value === confirmarSenhaInput.value) {
+                        erroMessage.style.display = "none";
+                        submitButton.disabled = false;  // Habilita o botão
+                    } else {
+                        erroMessage.style.display = "block";
+                        submitButton.disabled = true;  // Desabilita o botão
+                    }
+                } else {
+                    submitButton.disabled = true;  // Desabilita se os campos estiverem vazios
+                }
+            }
+
+            senhaInput.addEventListener("input", validarSenhas);
+            confirmarSenhaInput.addEventListener("input", validarSenhas);
+        });
+    </script>
+</body>
+</html>
+
+{% endblock %}

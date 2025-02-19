@@ -1,0 +1,72 @@
+/* CSS para estilizar a tabela */
+.pagination .page-link {
+    background-color: #7a0149; /* Cor de fundo azul */
+    color: white; /* Cor do texto */
+    border: 1px solid #7a0149; /* Borda combinando */
+}
+
+.pagination .page-link:hover {
+    background-color: #7a0149; /* Cor ao passar o mouse */
+    border-color: #7a0149;
+}
+
+.pagination .active .page-link {
+    background-color: #7a0149 !important; /* Cor do botão ativo (verde) */
+    border-color: #7a0149 !important;
+}
+
+
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5; /* Cor de fundo desejada ao passar o mouse */
+}
+
+/* CSS para estilizar o fieldset*/
+
+.fieldset-custom {
+    border: 1px solid #7a0149;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 10px 0;
+}
+.fieldset-custom legend {
+    width: auto;
+    padding: 0 10px;
+    font-weight: bold;
+    color: #7a0149;
+}
+
+/* CSS para estilizar formulário */
+
+form {
+    width: 100%;
+    margin: 0 auto;
+    color: #7a0149;
+}
+
+form input,
+form textarea {
+    width: 100%;
+    border: 1px solid #92c008;
+    border-radius: 4px;
+}
+
+form button {
+    background-color: #4caf50;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #45a049;
+}
+
+form button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.form-group.row.align-items-center.mb-4 {
+    color: #7a0149;
+}

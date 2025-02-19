@@ -1,0 +1,388 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block conteudo %}
+
+<br>
+
+<div class="container" id="jnlHorarioPrincipal">   
+
+    <div class="form-group row align-items-center mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 font-weight-bold text-#7a0149">
+                <i class="fas fa-book-open"></i> Cadastro de Horários
+            </h1>
+            <hr class="mt-2 mb-3 border-#7a0149">
+        </div>
+    </div>   
+    <fieldset class="fieldset-custom">
+        <legend>
+            {% if page_obj.paginator.count == 0 %}
+                Nenhum registro cadastrado
+            {% elif page_obj.paginator.count == 1 %}
+                1 registro encontrado
+            {% else %}
+                {{ page_obj.paginator.count }} registros encontrados
+            {% endif %}
+        </legend>
+
+        <div class="form-group row align-items-center">
+            <div class="col-auto">
+                <img src="{% static 'img/search.png' %}" alt="icone de uma lupa" width="20" height="20">
+            </div>
+            <div class="text-left">
+                <label for="dateBuscaData" class="col-form-label">Pesquisar por data:</label>
+            </div>
+            <div class="col">
+                <input type="date" class="form-control" id="dateBuscaData" placeholder="Digite a data" value="{{ query }}">
+            </div>
+        </div>                
+
+        <div id="horarios-table">
+            {% include 'horarios_table.html' %}
+        </div>
+    </fieldset>
+
+    <hr>
+
+    <fieldset class="fieldset-custom">
+        <legend id="formLegend">Novo horário</legend>
+        
+        <form class="needs-validation" method="POST" action="{% url 'cadastros:horarios' %}" novalidate> 
+            {% csrf_token %}
+
+            <!-- codigo -->
+            <input type="hidden" name="txtId" id="txtId" value="">
+
+            <div class="form-group row align-items-center has-validation">
+                <label for="dateData" class="col-sm-2 col-form-label text-left">Data:</label>
+                <div class="col-sm-10">
+                    <input type="date" class="form-control" name="dateData" id="dateData" placeholder="Informe a data" value="" required>
+                    <div class="invalid-feedback text-left">
+                        A data é obrigatória.
+                    </div>
+                </div>
+            </div>
+            <div class="form-group row align-items-center has-validation">
+                <label for="timeHorario" class="col-sm-2 col-form-label text-left">Horário:</label>
+                <div class="col-sm-10">
+                    <input type="time" class="form-control" name="timeHorario" id="timeHorario" placeholder="Informe o horário" value="" required>
+                    <div class="invalid-feedback text-left">
+                        O horário é obrigatório.
+                    </div>
+                </div>
+            </div>
+
+            <!-- serviços -->
+            <div id="divCadastroServicos"  style="display: none;">
+                <hr style="border-color: black; border-width: 1px;">
+                <div class="form-group row align-items-center has-validation">
+                    <div class="col-sm-2 col-form-label text-left">Serviços:</div>
+                    <div class="col-sm-10">
+                        <table class="table table-striped" id="grdServicos">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Valor</th>
+                                    <th>Responsável</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- sera preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                        <div class="text-left">
+                            <button type="button" class="btn btn-success" id="btnAssociarServico">
+                                <img src="{% static 'img/my_sillabus.png' %}" alt="Associar Servico" width="20" height="20"> ASSOCIAR SERVIÇOS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>       
+
+            <!-- acoes -->                                 
+            <div class="form-group row align-items-center">
+                <div class="col-sm-12 text-right">
+                    <a href="{% url 'cadastros:horarios'%}" class="btn btn-info" id="btnNovoHorario" style="display: none;">
+                        <img src="{% static 'img/create.png' %}" alt="Voltar ao modo de inclusão" width="20" height="20"> Voltar ao modo de inclusão
+                    </a>
+                    <button type="submit" class="btn btn-#7a0149" name="btnAcao" id="btnAcao" value="novo_horario">Salvar Novo Horário</button>
+                </div>
+            </div>
+        </form>
+    </fieldset>
+
+</div>
+
+<!-- janela de exclusao -->
+<div class="modal fade" id="jnlExcluir" tabindex="-1" role="dialog" aria-labelledby="jnlExcluirRotulo" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="jnlExcluirRotulo">Confirmação de Exclusão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Deseja mesmo excluir?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="jnlExcluirBtnExcluir">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- form que chama a janela horarios_add_servicos.html para gerir servicos nos horarios -->
+<form id="frmGridCarregaServicos" method="POST" target="popupWindow" style="display: none">
+    {% csrf_token %}
+    <input type="hidden" name="txtPostIdServicos" id="txtPostIdServicos" value="">
+</form>
+
+<!-- scripts do cadastro de servicos -->
+<script>
+    function pesquisarHorarioPorData() {
+        // Pegue o valor da data do campo de data
+        var horario_data = document.getElementById('dateBuscaData').value;
+        var page = 1;  // Pode pegar a página atual se tiver paginação implementada
+
+        // Verifica se a data foi preenchida
+        if (horario_data === '') {
+            alert('Por favor, selecione uma data.');
+            return;
+        }
+
+        // Realiza a requisição AJAX
+        fetch(`/cadastros/pesquisar_horario_por_data/?horario_data=${horario_data}&page=${page}`)
+            .then(response => response.json()) // Aguarda o retorno como JSON
+            .then(data => {
+                if (data.html) {
+                    // Atualiza o conteúdo da tabela com os novos horários
+                    document.getElementById('horarios_container').innerHTML = data.html;
+                } else {
+                    // Caso o servidor retorne algum erro
+                    console.error('Erro ao retornar os dados de horários:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao buscar horários:', error);
+            });
+    }
+
+    // Adiciona o evento 'change' no campo de data
+    document.getElementById('dateBuscaData').addEventListener('change', function() {
+        // Chama a função para realizar a pesquisa quando a data mudar
+        pesquisarHorarioPorData();
+    });
+    //funcao que carrega os dados de um servico ao clicar no grid e pegar o id do servico conforme o data-id da linha clicada
+    function carregarDadosHorario(horario_id) {
+        $.ajax({
+            url: '{% url "cadastros:obter_horario_por_id" %}',
+            data: {
+                'horario_id': horario_id
+            },
+            dataType: 'json',
+            success: function (horario_dados) {
+                
+                //carregamento dos campos id----------------------------
+                //txtId é o campo hidden que guarda o id do servico nesta pagina
+                $('#txtId').val(horario_dados.id);
+                //txtPostIdResponsaveis e o campo hidden que guarda o id do servico no form que abre a janela para associar responsaveis
+                $('#txtPostIdServicos').val(horario_dados.id);
+                //------------------------------------------------------
+
+                //carregamento dos campos simples do servico----------------
+                $('#dateData').val(horario_dados.data);
+                $('#timeHorario').val(horario_dados.hora);
+                //------------------------------------------------------
+
+                //funcao que garante a integridade com o csrf_token
+                function getCookie(name) {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+                //------------------------------------------------------
+
+                //operacoes com responsaveis------------------
+                //carrega os responsaveis do servico no grid de responsaveis
+                var $servicos = $('#grdServicos tbody');
+                $servicos.empty();
+                $.each(horario_dados.servicos, function(index, servico) {
+                    $servicos.append('<tr>' + 
+                                    '<td>' + servico.nome + '</td>' +
+                                    '<td>' + servico.valor + '</td>' +
+                                    '<td>' + servico.responsavel + '</td>' +
+                                    '<td><button type="button" class="btn btn-danger btn-sm delete-servico" data-id="' + 
+                                    servico.id + '">Remover</button></td></tr>');
+                });
+                
+                //botao associar responsaveis abaixo do grid de responsaveis
+                //prepara o form com o id do servico para fazer post ao abrir a janela de associar responsaveis
+                $(document).ready(function () {
+                    $('#btnAssociarServico').click(function () {
+                        //desabilita a janela pai ate que a janela modal (filho) seja fechada
+                        desabilitaInteracoes();
+
+                        //abre a janela modal (filho)
+                        $('#txtPostIdServicos').val($('#txtId').val());
+                        var form = $('#frmGridCarregaServicos');
+                        var windowName = 'jnlGridAssociarServico';
+                        window.open('', windowName, 'width=800,height=800');
+                        form.attr('action', "{% url 'cadastros:exibir_servicos_possiveis_para_horario' %}");
+                        form.attr('target', windowName);
+                        form.submit();
+                    });
+                });
+    
+                //botao excluir responsavel do grid de responsaveis
+                $('.delete-servico').click(function() {
+                    var servicoId = $(this).data('id');
+                    var horarioId = $('#txtId').val();
+                    $.ajax({
+                        url: '{% url "cadastros:excluir_servico_de_horario" %}',
+                        method: 'POST',
+                        data: {
+                            'servico_id': servicoId,
+                            'horario_id': horarioId,
+                            'csrfmiddlewaretoken': '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            toastr.error('Erro ao excluir a associação de serviço.');
+                        }
+                    });
+                });
+
+                //habilita a sessão do html onde fica o grid de responsaveis
+                $('#divCadastroServicos').show();
+                //-----------------------------------------
+
+                $('#formLegend').text('Alterar horario');
+                $('#btnAcao').text('Alterar horario').val('alterar_horario');
+                $('#btnNovoHorario').show();
+            }
+        });
+    }
+    //-----------------------------------------
+
+    //clique na linha da tabela para selecionar
+    function clickNoGrid() {
+        $('.horario-row').click(function() {
+            $('.horario-row').removeClass('table-primary table-bordered');
+            $(this).addClass('table-primary table-bordered');
+
+            var horario_id = $(this).data('id');
+            carregarDadosHorario(horario_id);
+        });
+
+        $('.delete-btn').click(function() {
+            apagarHorarioPorID = $(this).data('id');
+            $('#jnlExcluir').modal('show');
+        });
+    }
+
+    //manipulacao do botao de exclusao
+    let apagarHorarioPorID;
+    $('.delete-btn').click(function() {
+        apagarHorarioPorID = $(this).data('id');
+        $('#jnlExcluir').modal('show');
+    });
+
+    $('#jnlExcluirBtnExcluir').click(function() {
+        $.ajax({
+            url: '{% url "cadastros:excluir_horario" %}',
+            method: 'POST',
+            data: {
+                'horario_id': apagarHorarioPorID,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    location.reload();
+                } else {
+                    toastr.error(response.message);
+                }
+                $('#jnlExcluir').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                toastr.error('Remova as associações de serviços antes de excluir o horário.');
+                $('#jnlExcluir').modal('hide');
+            }
+        });
+    });
+
+    //filtra por nome via AJAX
+    function filtraHorarioPorData() {
+        let horario_data = $('#dateBuscaData').val();
+        $.ajax({
+            url: '{% url "cadastros:pesquisar_horario_por_data" %}',
+            data: {
+                'horario_data': horario_data
+            },
+            success: function(data) {
+                $('#horarios-table').html(data.html);
+                clickNoGrid();
+            }
+        });
+    }
+
+    //evento de input na caixa de texto de pesquisa
+    $('#dateBuscaData').on('input', function () {
+        filtraHorarioPorNome();
+    });
+
+    clickNoGrid();
+
+    //eventos para lidar com a janela modal de associar responsaveis
+    function desabilitaInteracoes() {
+        $('#jnlHorarioPrincipal').find('input, textarea, select, button').prop('disabled', true);
+        $('#jnlHorarioPrincipal').css('pointer-events', 'none').css('opacity', '0.6');
+        $('#jnlHorarioPrincipal').find('a').on('click', function(event) {
+            event.preventDefault();
+        });
+    }        
+    
+    function habilitaInteracoes() {
+        $('#jnlHorarioPrincipal').find('input, textarea, select, button').prop('disabled', false);
+        $('#jnlHorarioPrincipal').css('pointer-events', 'auto').css('opacity', '1');
+        $('#jnlHorarioPrincipal').find('a').off('click');
+    }
+    //-----------------------------------------
+
+    (() => {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+
+{% endblock %}

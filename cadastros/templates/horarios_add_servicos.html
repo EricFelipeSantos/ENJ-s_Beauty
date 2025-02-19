@@ -1,0 +1,77 @@
+{% extends 'master_modal.html' %}
+{% load static %}
+
+{% block conteudo %}
+
+<!-- JANELA QUE CARREGA OS DADOS DOS USUARIOS QUE PODEM SER ASSOCIADOS AO ATIVIDADES COMO RESPONSAVEIS -->
+<div class="container mt-5">
+    <h1 class="mb-4">Associar Serviços</h1>
+    <div class="form-group row align-items-center mb-4">
+        <div class="col-auto">
+            <img src="{% static 'img/search.png' %}" alt="icone de uma lupa" width="20" height="20">
+        </div>
+        <div class="text-left">
+            <label for="txtBuscaServico" class="col-form-label">Pesquisar por nome:</label>
+        </div>
+        <div class="col">
+            <input type="text" class="form-control" id="txtBuscaServico" placeholder="Digite o nome">
+        </div>
+    </div>
+    <!-- campo que guarda o ID da atividade recebido via POST e setado aqui no javascript dessa pagina -->
+    <input type="hidden" id="txtIdHorario" name="txtIdHorario" value="">
+    <!-- grid onde aparecem todos os usuarios que podem ser associados a atividade como responsaveis -->
+    <div id="servicos-table">            
+        {% include 'horarios_add_servicos_table.html' %}
+    </div>
+
+</div>
+
+<!-- scripts da associacao de responsaveis as atividades -->
+<script>
+    $(document).ready(function() {
+        /*seta o ID da atividade aqui em txtIdAtividade que foi passado via POST na variavel txtPostIdResponsaveis 
+        do form frmGridCarregaResponsaveis em atividades.html*/
+        var horarioId = window.opener.$('#txtPostIdServicos').val();
+        //seta o txtIdAtividade com o ID da atividade capturado
+        $('#txtIdHorario').val(horarioId);
+
+        //rotinas que permitem a pesquisa de responsaveis no grid responsaveis-table que vem de atividades_add_responsaveis_table.html
+        function pesquisaServicos(nome, page) {
+            const horarioId = $('#txtIdHorario').val();
+            $.ajax({
+                url: '{% url "cadastros:pesquisar_servico_por_nome_para_horario" %}',
+                data: {
+                    'nome': nome,
+                    'page': page,
+                    'horario_id': horarioId
+                },
+                success: function(data) {
+                    $('#servicos-table').html(data.html);
+                }
+            });
+        }
+
+        $('#txtBuscaServico').on('input', function() {
+            const nome = $(this).val();
+            pesquisaServicos(nome, 1);
+        });
+
+        $(document).on('click', '.page-link', function(e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            const nome = $('#txtBuscaServico').val();
+            pesquisaServicos(nome, page);
+        });
+
+        //restaura as interacoes na janela pai quando esta janela filha e fechada
+        window.onbeforeunload = function() {
+            if (window.opener && !window.opener.closed) {
+                alert('fechou');
+                window.opener.habilitaInteracoes();
+            }
+        };
+        
+    });
+</script>
+    
+{% endblock %}

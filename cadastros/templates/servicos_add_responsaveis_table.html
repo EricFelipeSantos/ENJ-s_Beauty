@@ -1,0 +1,109 @@
+<!-- grid de usuarios que podem ser associados a atividade como responsaveis -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>Ação</th>
+        </tr>
+    </thead>
+    
+    <tbody>
+        {% for responsavel in page_obj %}
+        <tr>
+            <td>{{ responsavel.nome }}</td>
+            <td>{{ responsavel.email }}</td>
+            <td>{{ responsavel.telefone }}</td>
+            <td>
+                {% if responsavel.id in responsaveis_ja_associados %}
+                    <button class="btn btn-secondary btnAssociarNovoResponsavel" data-id="{{ responsavel.id }}" data-action="remover">Já associado</button>
+                {% else %}
+                    <button class="btn btn-#7a0149 btnAssociarNovoResponsavel" data-id="{{ responsavel.id }}" data-action="associar">Associar</button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script>
+    //funcao que garante a integridade com o csrf_token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    //rotina que permite remover ou adicionar uma associacao de responsavel a atividade trocando o botao de associar para remover e vice-versa
+    $(document).on('click', '.btnAssociarNovoResponsavel', function() {
+        var responsavelId = $(this).data('id');
+        var servicoId = $('#txtIdServico').val();
+        var action = $(this).data('action');
+        var url = action === 'associar' ? '{% url "cadastros:adicionar_responsavel_de_servico" %}' : '{% url "cadastros:excluir_responsavel_de_servico" %}';
+        var button = $(this);
+
+        $.ajax({
+            url: url,
+            method: 'POST',
+            data: {
+                'responsavel_id': responsavelId,
+                'servico_id': servicoId,
+                'csrfmiddlewaretoken': csrftoken
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (action === 'associar') {
+                        button.removeClass('btn-primary').addClass('btn-secondary').text('Já associado').data('action', 'remover');
+                    } else {
+                        button.removeClass('btn-secondary').addClass('btn-primary').text('Associar').data('action', 'associar');
+                    }
+                    //atualiza a lista de responsaveis associados na pagina atividades.html em tempo real
+                    window.opener.carregarDadosServico(servicoId);
+                    toastr.success(response.message);
+                } else {
+                    toastr.error(response.message);
+                }
+            },
+            error: function(xhr, status, error) {
+                toastr.error('Erro ao processar a requisição.');
+            }
+        });
+    });
+</script>
+
+<!-- codigo de paginacao do grid de responsaveis desta pagina -->
+<nav>
+    <ul class="pagination">
+        {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="#" data-page="{{ page_obj.previous_page_number }}">Anterior</a></li>
+        {% else %}
+            <li class="page-item disabled"><a class="page-link" href="#">Anterior</a></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+                <li class="page-item active"><a class="page-link" href="#" data-page="{{ num }}">{{ num }}</a></li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="#" data-page="{{ num }}">{{ num }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="#" data-page="{{ page_obj.next_page_number }}">Próximo</a></li>
+        {% else %}
+            <li class="page-item disabled"><a class="page-link" href="#">Próximo</a></li>
+        {% endif %}
+    </ul>
+</nav>

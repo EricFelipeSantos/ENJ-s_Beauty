@@ -1,0 +1,356 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block conteudo %}
+
+<br>
+
+<div class="container" id="jnlServicoPrincipal">   
+
+    <div class="form-group row align-items-center mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 font-weight-bold text-#7a0149">
+                <i class="fas fa-book-open"></i> Cadastro de Serviços
+            </h1>
+            <hr class="mt-2 mb-3 border-#7a0149">
+        </div>
+    </div>   
+    <fieldset class="fieldset-custom">
+        <legend>
+            {% if page_obj.paginator.count == 0 %}
+                Nenhum registro cadastrado
+            {% elif page_obj.paginator.count == 1 %}
+                1 registro encontrado
+            {% else %}
+                {{ page_obj.paginator.count }} registros encontrados
+            {% endif %}
+        </legend>
+
+        <div class="form-group row align-items-center">
+            <div class="col-auto">
+                <img src="{% static 'img/search.png' %}" alt="icone de uma lupa" width="20" height="20">
+            </div>
+            <div class="text-left">
+                <label for="txtBuscaNome" class="col-form-label">Pesquisar por nome:</label>
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="txtBuscaNome" placeholder="Digite o nome" value="{{ query }}">
+            </div>
+        </div>                
+
+        <div id="servicos-table">
+            {% include 'servicos_table.html' %}
+        </div>
+    </fieldset>
+
+    <hr>
+
+    <fieldset class="fieldset-custom">
+        <legend id="formLegend">Novo servico</legend>
+        
+        <form class="needs-validation" method="POST" action="{% url 'cadastros:servicos' %}" novalidate> 
+            {% csrf_token %}
+
+            <!-- codigo -->
+            <input type="hidden" name="txtId" id="txtId" value="">
+
+            <!-- nome -->
+            <div class="form-group row align-items-center has-validation">
+                <label for="txtNome" class="col-sm-2 col-form-label text-left">Nome:</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="txtNome" id="txtNome" placeholder="Digite o nome" value="" required>
+                    <div class="invalid-feedback text-left">
+                        O nome é obrigatório.
+                    </div>
+                </div>
+            </div>
+            <div class="form-group row align-items-center has-validation">
+                <label for="numValor" class="col-sm-2 col-form-label text-left">Valor:</label>
+                <div class="col-sm-10">
+                    <input type="number" step="0.01" class="form-control" name="numValor" id="numValor" placeholder="Digite o valor do serviço" value="" required>
+                    <div class="invalid-feedback text-left">
+                        O valor é obrigatório.
+                    </div>
+                </div>
+            </div>
+
+            <!-- responsaveis -->
+            <div id="divCadastroResponsaveis"  style="display: none;">
+                <hr style="border-color: black; border-width: 1px;">
+                <div class="form-group row align-items-center has-validation">
+                    <div class="col-sm-2 col-form-label text-left">Responsáveis:</div>
+                    <div class="col-sm-10">
+                        <table class="table table-striped" id="grdResponsaveis">
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- sera preenchido dinamicamente -->
+                            </tbody>
+                        </table>
+                        <div class="text-left">
+                            <button type="button" class="btn btn-success" id="btnAssociarResponsavel">
+                                <img src="{% static 'img/new_coord.png' %}" alt="Associar Responsavel" width="20" height="20"> ASSOCIAR RESPONSÁVEIS
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>       
+
+            <!-- acoes -->                                 
+            <div class="form-group row align-items-center">
+                <div class="col-sm-12 text-right">
+                    <a href="{% url 'cadastros:servicos'%}" class="btn btn-info" id="btnNovoServico" style="display: none;">
+                        <img src="{% static 'img/create.png' %}" alt="Voltar ao modo de inclusão" width="20" height="20"> Voltar ao modo de inclusão
+                    </a>
+                    <button type="submit" class="btn btn-#7a0149" name="btnAcao" id="btnAcao" value="novo_servico">Salvar Novo Serviço</button>
+                </div>
+            </div>
+        </form>
+    </fieldset>
+
+</div>
+
+<!-- janela de exclusao -->
+<div class="modal fade" id="jnlExcluir" tabindex="-1" role="dialog" aria-labelledby="jnlExcluirRotulo" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="jnlExcluirRotulo">Confirmação de Exclusão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Deseja mesmo excluir?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="jnlExcluirBtnExcluir">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- form que chama a janela servicos_add_responsaveis.html para gerir responsaveis de servicos -->
+<form id="frmGridCarregaResponsaveis" method="POST" target="popupWindow" style="display: none">
+    {% csrf_token %}
+    <input type="hidden" name="txtPostIdResponsaveis" id="txtPostIdResponsaveis" value="">
+</form>
+
+<!-- scripts do cadastro de servicos -->
+<script>
+    //funcao que carrega os dados de um servico ao clicar no grid e pegar o id do servico conforme o data-id da linha clicada
+    function carregarDadosServico(servico_id) {
+        $.ajax({
+            url: '{% url "cadastros:obter_servico_por_id" %}',
+            data: {
+                'servico_id': servico_id
+            },
+            dataType: 'json',
+            success: function (servico_dados) {
+                
+                //carregamento dos campos id----------------------------
+                //txtId é o campo hidden que guarda o id do servico nesta pagina
+                $('#txtId').val(servico_dados.id);
+                //txtPostIdResponsaveis e o campo hidden que guarda o id do servico no form que abre a janela para associar responsaveis
+                $('#txtPostIdResponsaveis').val(servico_dados.id);
+                //------------------------------------------------------
+
+                //carregamento dos campos simples do servico----------------
+                $('#txtNome').val(servico_dados.nome);
+                $('#numValor').val(servico_dados.valor);
+                //------------------------------------------------------
+
+                //funcao que garante a integridade com o csrf_token
+                function getCookie(name) {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+                //------------------------------------------------------
+
+                //operacoes com responsaveis------------------
+                //carrega os responsaveis do servico no grid de responsaveis
+                var $responsaveis = $('#grdResponsaveis tbody');
+                $responsaveis.empty();
+                $.each(servico_dados.responsaveis, function(index, responsavel) {
+                    $responsaveis.append('<tr>' + 
+                                    '<td>' + responsavel.nome + '</td>' +
+                                    '<td>' + responsavel.email + '</td>' +
+                                    '<td>' + responsavel.telefone + '</td>' +
+                                    '<td><button type="button" class="btn btn-danger btn-sm delete-responsavel" data-id="' + 
+                                    responsavel.id + '">Remover</button></td></tr>');
+                });
+                
+                //botao associar responsaveis abaixo do grid de responsaveis
+                //prepara o form com o id do servico para fazer post ao abrir a janela de associar responsaveis
+                $(document).ready(function () {
+                    $('#btnAssociarResponsavel').click(function () {
+                        //desabilita a janela pai ate que a janela modal (filho) seja fechada
+                        desabilitaInteracoes();
+
+                        //abre a janela modal (filho)
+                        $('#txtPostIdResponsaveis').val($('#txtId').val());
+                        var form = $('#frmGridCarregaResponsaveis');
+                        var windowName = 'jnlGridAssociarResponsavel';
+                        window.open('', windowName, 'width=800,height=800');
+                        form.attr('action', "{% url 'cadastros:exibir_responsaveis_possiveis_para_servico' %}");
+                        form.attr('target', windowName);
+                        form.submit();
+                    });
+                });
+    
+                //botao excluir responsavel do grid de responsaveis
+                $('.delete-responsavel').click(function() {
+                    var responsavelId = $(this).data('id');
+                    var servicoId = $('#txtId').val();
+                    $.ajax({
+                        url: '{% url "cadastros:excluir_responsavel_de_servico" %}',
+                        method: 'POST',
+                        data: {
+                            'responsavel_id': responsavelId,
+                            'servico_id': servicoId,
+                            'csrfmiddlewaretoken': '{{ csrf_token }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                toastr.success(response.message);
+                                carregarDadosServico(servicoId);
+                            } else {
+                                toastr.error(response.message);
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            toastr.error('Erro ao excluir a associação de responsavel.');
+                        }
+                    });
+                });
+
+                //habilita a sessão do html onde fica o grid de responsaveis
+                $('#divCadastroResponsaveis').show();
+                //-----------------------------------------
+
+                $('#formLegend').text('Alterar serviço');
+                $('#btnAcao').text('Alterar serviço').val('alterar_servico');
+                $('#btnNovoServico').show();
+            }
+        });
+    }
+    //-----------------------------------------
+
+    //clique na linha da tabela para selecionar
+    function clickNoGrid() {
+        $('.servico-row').click(function() {
+            $('.servico-row').removeClass('table-primary table-bordered');
+            $(this).addClass('table-primary table-bordered');
+
+            var servico_id = $(this).data('id');
+            carregarDadosServico(servico_id);
+        });
+
+        $('.delete-btn').click(function() {
+            apagarServicoPorID = $(this).data('id');
+            $('#jnlExcluir').modal('show');
+        });
+    }
+
+    //manipulacao do botao de exclusao
+    let apagarServicoPorID;
+    $('.delete-btn').click(function() {
+        apagarServicoPorID = $(this).data('id');
+        $('#jnlExcluir').modal('show');
+    });
+
+    $('#jnlExcluirBtnExcluir').click(function() {
+        $.ajax({
+            url: '{% url "cadastros:excluir_servico" %}',
+            method: 'POST',
+            data: {
+                'servico_id': apagarServicoPorID,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(response) {
+                if (response.success) {
+                    toastr.success(response.message);
+                    location.reload();
+                } else {
+                    toastr.error(response.message);
+                }
+                $('#jnlExcluir').modal('hide');
+            },
+            error: function(xhr, status, error) {
+                toastr.error('Remova as associações de responsaveis antes de excluir o serviço.');
+                $('#jnlExcluir').modal('hide');
+            }
+        });
+    });
+
+    //filtra por nome via AJAX
+    function filtraServicoPorNome() {
+        let servico_nome = $('#txtBuscaNome').val();
+        $.ajax({
+            url: '{% url "cadastros:pesquisar_servico_por_nome" %}',
+            data: {
+                'servico_nome': servico_nome
+            },
+            success: function(data) {
+                $('#servicos-table').html(data.html);
+                clickNoGrid();
+            }
+        });
+    }
+
+    //evento de input na caixa de texto de pesquisa
+    $('#txtBuscaNome').on('input', function () {
+        filtraServicoPorNome();
+    });
+
+    clickNoGrid();
+
+    //eventos para lidar com a janela modal de associar responsaveis
+    function desabilitaInteracoes() {
+        $('#jnlServicoPrincipal').find('input, textarea, select, button').prop('disabled', true);
+        $('#jnlServicoPrincipal').css('pointer-events', 'none').css('opacity', '0.6');
+        $('#jnlServicoPrincipal').find('a').on('click', function(event) {
+            event.preventDefault();
+        });
+    }        
+    
+    function habilitaInteracoes() {
+        $('#jnlServicoPrincipal').find('input, textarea, select, button').prop('disabled', false);
+        $('#jnlServicoPrincipal').css('pointer-events', 'auto').css('opacity', '1');
+        $('#jnlServicoPrincipal').find('a').off('click');
+    }
+    //-----------------------------------------
+
+    (() => {
+        'use strict';
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', event => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+</script>
+
+{% endblock %}

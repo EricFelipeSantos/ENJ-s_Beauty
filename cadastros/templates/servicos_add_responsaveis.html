@@ -1,0 +1,77 @@
+{% extends 'master_modal.html' %}
+{% load static %}
+
+{% block conteudo %}
+
+<!-- JANELA QUE CARREGA OS DADOS DOS USUARIOS QUE PODEM SER ASSOCIADOS AO ATIVIDADES COMO RESPONSAVEIS -->
+<div class="container mt-5">
+    <h1 class="mb-4">Associar Responsáveis</h1>
+    <div class="form-group row align-items-center mb-4">
+        <div class="col-auto">
+            <img src="{% static 'img/search.png' %}" alt="icone de uma lupa" width="20" height="20">
+        </div>
+        <div class="text-left">
+            <label for="txtBuscaResponsavel" class="col-form-label">Pesquisar por nome:</label>
+        </div>
+        <div class="col">
+            <input type="text" class="form-control" id="txtBuscaResponsavel" placeholder="Digite o nome">
+        </div>
+    </div>
+    <!-- campo que guarda o ID da atividade recebido via POST e setado aqui no javascript dessa pagina -->
+    <input type="hidden" id="txtIdServico" name="txtIdServico" value="">
+    <!-- grid onde aparecem todos os usuarios que podem ser associados a atividade como responsaveis -->
+    <div id="responsaveis-table">            
+        {% include 'servicos_add_responsaveis_table.html' %}
+    </div>
+
+</div>
+
+<!-- scripts da associacao de responsaveis as atividades -->
+<script>
+    $(document).ready(function() {
+        /*seta o ID da atividade aqui em txtIdAtividade que foi passado via POST na variavel txtPostIdResponsaveis 
+        do form frmGridCarregaResponsaveis em atividades.html*/
+        var servicoId = window.opener.$('#txtPostIdResponsaveis').val();
+        //seta o txtIdAtividade com o ID da atividade capturado
+        $('#txtIdServico').val(servicoId);
+
+        //rotinas que permitem a pesquisa de responsaveis no grid responsaveis-table que vem de atividades_add_responsaveis_table.html
+        function pesquisaResponsaveis(nome, page) {
+            const servicoId = $('#txtIdServico').val();
+            $.ajax({
+                url: '{% url "cadastros:pesquisar_responsavel_por_nome_para_servico" %}',
+                data: {
+                    'nome': nome,
+                    'page': page,
+                    'servico_id': servicoId
+                },
+                success: function(data) {
+                    $('#responsaveis-table').html(data.html);
+                }
+            });
+        }
+
+        $('#txtBuscaResponsavel').on('input', function() {
+            const nome = $(this).val();
+            pesquisaResponsaveis(nome, 1);
+        });
+
+        $(document).on('click', '.page-link', function(e) {
+            e.preventDefault();
+            const page = $(this).data('page');
+            const nome = $('#txtBuscaResponsavel').val();
+            pesquisaResponsaveis(nome, page);
+        });
+
+        //restaura as interacoes na janela pai quando esta janela filha e fechada
+        window.onbeforeunload = function() {
+            if (window.opener && !window.opener.closed) {
+                alert('fechou');
+                window.opener.habilitaInteracoes();
+            }
+        };
+        
+    });
+</script>
+    
+{% endblock %}

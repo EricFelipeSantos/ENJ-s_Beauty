@@ -1,0 +1,371 @@
+{% extends 'master.html' %}
+{% load static %}
+
+{% block conteudo %}
+
+<br>
+
+<div class="container">   
+    <div class="form-group row align-items-center mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 font-weight-bold text-#7a0149">
+                <i class="fas fa-book-open"></i> Cadastro de Usuários
+            </h1>
+            <hr class="mt-2 mb-3 border-#7a0149">
+        </div>
+    </div>  
+    <fieldset class="fieldset-custom">
+        <legend>
+            {% if page_obj.paginator.count == 0 %}
+                Nenhum registro cadastrado
+            {% elif page_obj.paginator.count == 1 %}
+                1 registro encontrado
+            {% else %}
+                {{ page_obj.paginator.count }} registros encontrados
+            {% endif %}
+        </legend>
+
+        <div class="form-group row align-items-center">
+            <div class="col-auto">
+                <img src="{% static 'img/search.png' %}" alt="icone de uma lupa" width="20" height="20">
+            </div>
+            <div class="text-left">
+                <label for="txtBuscaNome" class="col-form-label">Pesquisar por nome:</label>
+            </div>
+            <div class="col">
+                <input type="text" class="form-control" id="txtBuscaNome" placeholder="Digite o nome" value="{{ query }}">
+            </div>
+        </div>                
+
+        <div id="usuarios-table">
+            {% include 'usuarios_table.html' %}
+        </div>
+    </fieldset>
+
+    <hr>
+
+    <fieldset class="fieldset-custom">
+        <legend id="formLegend">Novo usuário</legend>
+        <form class="needs-validation" method="POST" action="{% url 'cadastros:usuarios' %}" novalidate> 
+            {% csrf_token %}
+            <input type="hidden" name="txtId" id="txtId" value="">
+            
+            <input type="hidden" name="txtPerfilAtual" id="txtPerfilAtual" value="{{ request.session.perfil_atual }}">
+
+            <!-- departamento -->
+            <!--<div class="form-group row align-items-center has-validation">
+                <label for="slcDepartamento" class="col-sm-2 col-form-label text-left">Departamento:</label>
+                <div class="col-sm-10">
+                    <select class="form-control" name="slcDepartamento" id="slcDepartamento" required>
+                        <option value="" disabled selected>Selecione um departamento</option>
+                        {% for departamento in departamentos %}
+                            <option value="{{ departamento.id }}">{{ departamento.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    
+                    <div class="invalid-feedback text-left">
+                        O departamento é obrigatório.
+                    </div>
+                </div>
+            </div>-->
+
+            <!-- nome -->
+            <div class="form-group row align-items-center has-validation">
+                <label for="txtNome" class="col-sm-2 col-form-label text-left">Nome:</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="txtNome" id="txtNome" placeholder="Digite o nome" value="" required>
+                    <div class="invalid-feedback text-left">
+                        O nome é obrigatório.
+                    </div>
+                </div>
+            </div>
+
+            <!-- email -->
+            <div class="form-group row align-items-center has-validation">
+                <label for="txtEmail" class="col-sm-2 col-form-label text-left">E-mail:</label>
+                <div class="col-sm-10">
+                    <input type="email" class="form-control" name="txtEmail" id="txtEmail" placeholder="Digite o e-mail" value="" required autocomplete="off">
+                    <div id="emailFormatError" class="invalid-feedback text-left" style="display:none;">
+                        O e-mail é obrigatório e deve estar no formato 'email@dominio'.
+                    </div>
+                    <div id="emailExistError" class="invalid-feedback text-left" style="display:none;">
+                        O e-mail já está em uso.
+                    </div>
+                </div>
+            </div>
+
+            <!-- telefone -->
+            <div class="form-group row align-items-center has-validation">
+                <label for="txtTelefone" class="col-sm-2 col-form-label text-left">Telefone:</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="txtTelefone" id="txtTelefone" placeholder="Informe o telefone" value="" required>
+                    <div class="invalid-feedback text-left">
+                        O telefone é obrigatório.
+                    </div>
+                </div>
+            </div>
+
+            <!-- senha -->
+            <div class="form-group row align-items-center has-validation">
+                <label for="txtSenha" class="col-sm-2 col-form-label text-left">Senha:</label>
+                <div class="col-sm-10">
+                    <input type="password" class="form-control" name="txtSenha" id="txtSenha" placeholder="Digite a senha" minlength="6" required autocomplete="new-password">
+                    <div class="invalid-feedback text-left">
+                        A senha é obrigatória e deve ter no mínimo 6 caracteres.
+                    </div>
+                </div>
+            </div>
+
+            <!-- perfis -->
+            <div class="form-group row align-items-center" id="divPerfis">
+                <label class="col-sm-2 col-form-label text-left">Perfil:</label>
+                <div class="col-sm-10 text-left">
+                    {% for perfil in perfis %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="chkPerfis" id="chkPerfil{{ perfil.id }}" value="{{ perfil.id }}">
+                            <label class="form-check-label" for="chkPerfil{{ perfil.id }}">{{ perfil.nome }}</label>
+                        </div>
+                    {% endfor %}                   
+                    <div id="perfisError" class="invalid-feedback text-left" style="display:none;">
+                        Pelo menos um perfil deve ser selecionado.
+                    </div>
+                </div>
+            </div>
+
+            <!-- acoes -->
+            <div class="form-group row align-items-center">
+                <div class="col-sm-12 text-right">
+                    <a href="{% url 'cadastros:usuarios'%}" class="btn btn-info" id="btnNovoUsuario" style="display: none;">
+                        <img src="{% static 'img/create.png' %}" alt="Voltar ao modo de inclusão" width="20" height="20"> Voltar ao modo de inclusão
+                    </a>
+                    <button type="submit" class="btn btn-#7a0149" name="btnAcao" id="btnAcao" value="novo_usuario">Salvar Novo Usuário</button>
+                </div>
+            </div>
+        </form>
+    </fieldset>
+</div>
+
+<div class="modal fade" id="jnlExcluir" tabindex="-1" role="dialog" aria-labelledby="jnlExcluirRotulo" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="jnlExcluirRotulo">Confirmação de Exclusão</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                Deseja mesmo excluir?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-danger" id="jnlExcluirBtnExcluir">Excluir</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br>
+
+<script>
+    $(document).ready(function () {
+
+        function desabilitarCampos() {
+            $('#txtNome, #txtEmail, #txtSenha, input[name="chkPerfis"], #btnAcao').prop('disabled', true);
+        }
+
+        function habilitarCampos() {
+            $('#txtNome, #txtEmail, #txtSenha, input[name="chkPerfis"], #btnAcao').prop('disabled', false);
+        }
+
+        function validateEmail(email) {
+            var re = /^[^\s@]+@[^\s@]+.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function checkEmailValidity() {
+            var email = $('#txtEmail').val();
+            if ($('#btnAcao').val() !== 'alterar_usuario' && (email.length === 0 || !validateEmail(email))) {
+                $('#txtEmail').addClass('is-invalid');
+                $('#emailFormatError').text('Insira um e-mail válido no formato nome@domínio.').show();
+                $('#emailExistError').hide();
+                return false;
+            } else {
+                $('#txtEmail').removeClass('is-invalid');
+                $('#emailFormatError').hide();
+            }
+
+            var isValid = false;
+            $.ajax({
+                url: '{% url "cadastros:verificar_email" %}',
+                data: {
+                    'email': email
+                },
+                dataType: 'json',
+                async: false,
+                success: function (data) {
+                    if (data.is_taken) {
+                        $('#txtEmail').addClass('is-invalid');
+                        $('#emailFormatError').hide();
+                        $('#emailExistError').text('O e-mail já está em uso.').show();
+                        isValid = false;
+                    } else {
+                        $('#txtEmail').removeClass('is-invalid');
+                        $('#emailExistError').hide();
+                        isValid = true;
+                    }
+                }
+            });
+            return isValid;
+        }
+
+        function checkPerfisValidity() {
+            if ($('input[name="chkPerfis"]:checked').length === 0) {
+                $('#perfisError').show();
+                $('input[name="chkPerfis"]').addClass('is-invalid');
+                return false;
+            } else {
+                $('#perfisError').hide();
+                $('input[name="chkPerfis"]').removeClass('is-invalid');
+                return true;
+            }
+        }
+
+        function carregarDadosUsuario(usuario_id) {
+            $.ajax({
+                url: '{% url "cadastros:obter_usuario_por_id" %}',
+                data: {
+                    'usuario_id': usuario_id
+                },
+                dataType: 'json',
+                success: function (usuario_dados) {
+                    $('#txtId').val(usuario_dados.id);                    
+                    $('#txtEmail').val(usuario_dados.email).prop('readonly', true);
+                    $('#txtNome').val(usuario_dados.nome)
+                    $('#txtSenha').val(usuario_dados.senha)      
+                    $('#txtTelefone').val(usuario_dados.telefone);              
+                    $('#btnAcao').show();
+
+                    $('#formLegend').text('Alterar usuário');
+                    $('#btnAcao').text('Alterar usuário').val('alterar_usuario');
+                    $('#btnNovoUsuario').show();
+
+                    $('input[name="chkPerfis"]').prop('checked', false);
+                    usuario_dados.perfis.forEach(function(perfilId) {
+                        $('input[name="chkPerfis"][value="' + perfilId + '"]').prop('checked', true);
+                    });
+                }
+            });
+        }
+
+        function clickNoGrid() {
+            $('.usuario-row').click(function() {
+                $('.usuario-row').removeClass('table-primary table-bordered');
+                $(this).addClass('table-primary table-bordered');
+                var usuario_id = $(this).data('id');
+                carregarDadosUsuario(usuario_id);
+            });
+
+            $('.delete-btn').click(function() {
+                usuarioIdParaExcluir = $(this).data('id');
+                $('#jnlExcluir').modal('show');
+            });
+        }
+
+        let usuarioIdParaExcluir;
+        $('.delete-btn').click(function() {
+            usuarioIdParaExcluir = $(this).data('id');
+            $('#jnlExcluir').modal('show');
+        });
+
+        $('#jnlExcluirBtnExcluir').click(function() {
+            $.ajax({
+                url: '{% url "cadastros:excluir_usuario" %}',
+                method: 'POST',
+                data: {
+                    'usuario_id': usuarioIdParaExcluir,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        toastr.success(response.message);
+                        location.reload();
+                    } else {
+                        toastr.error(response.message);
+                    }
+                    $('#jnlExcluir').modal('hide');
+                },
+                error: function(xhr, status, error) {
+                    toastr.error('Erro ao excluir o usuário.');
+                    $('#jnlExcluir').modal('hide');
+                }
+            });
+        });
+
+        function filtraUsuarioPorNome() {
+            let usuario_nome = $('#txtBuscaNome').val();
+            $.ajax({
+                url: '{% url "cadastros:pesquisar_usuario_por_nome" %}',
+                data: {
+                    'usuario_nome': usuario_nome
+                },
+                success: function(data) {
+                    $('#usuarios-table').html(data.html);
+                    clickNoGrid();
+                }
+            });
+        }
+
+        $('#txtBuscaNome').on('input', function () {
+            filtraUsuarioPorNome();
+        });
+
+        clickNoGrid();
+
+        $('#slcDepartamento').on('change', function() {
+            habilitarCampos();
+        });
+
+        $('#txtEmail').blur(function () {
+            if ($('#btnAcao').val() !== 'alterar_usuario') {
+                checkEmailValidity();
+            }
+        });
+
+        $('#txtEmail').on('input', function () {
+            if ($('#txtEmail').hasClass('is-invalid')) {
+                $('#txtEmail').removeClass('is-invalid');
+                $('#emailFormatError').hide();
+                $('#emailExistError').hide();
+            }
+        });
+
+        $('form').on('submit', function(event) {
+            if ($('#btnAcao').val() !== 'alterar_usuario' && !checkEmailValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+
+            if (!checkPerfisValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+
+        (() => {
+            'use strict'
+            const forms = document.querySelectorAll('.needs-validation')
+            Array.from(forms).forEach(form => {
+                form.addEventListener('submit', event => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault()
+                        event.stopPropagation()
+                    }
+                    form.classList.add('was-validated')
+                }, false)
+            })
+        })();
+    });
+</script>
+
+{% endblock %}
