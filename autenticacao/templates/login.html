@@ -1,26 +1,88 @@
 {% extends 'index.html' %}
 
 {% block conteudo %}
-<div class="container">
-    <h2 style="color: white">Login</h2>
-    <form method="POST" action="{% url 'autenticacao:login' %}">
+<div style="
+    background-color: #7a0149;
+    padding: 30px;
+    text-align: center;
+    border-radius: 10px;
+    width: 50%;
+    margin: auto;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+">
+    <h2 style="
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #ffc0cb;
+        display: inline-block;
+    ">
+        Login
+    </h2>
+
+    <form method="POST" action="{% url 'autenticacao:login' %}" style="margin-top: 20px;">
         {% csrf_token %}
-        <div class="form-group">
-            <label for="txtEmail" style="color: white">E-mail</label>
-            <input type="email" class="form-control" id="txtEmail" name="txtEmail" required autocomplete="off">
-            <div id="divEmailError" class="error-message"> </div>
+
+        <div class="form-group" style="text-align: left; margin-bottom: 15px;">
+            <label for="txtEmail" style="color: white; font-weight: bold;">E-mail</label>
+            <input type="email" class="form-control" id="txtEmail" name="txtEmail" required autocomplete="off" style="
+                width: 100%;
+                padding: 10px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+            ">
+            <div id="divEmailError" class="error-message" style="color: #ffc0cb; font-size: 14px; margin-top: 5px;"></div>
         </div>
-        <div class="form-group hidden-group" id="divSenha">
-            <label for="txtSenha" style="color: white">Senha</label>
-            <input type="password" class="form-control" id="txtSenha" name="txtSenha" required autocomplete="new-password">
+
+        <div class="form-group hidden-group" id="divSenha" style="text-align: left; margin-bottom: 15px;">
+            <label for="txtSenha" style="color: white; font-weight: bold;">Senha</label>
+            <input type="password" class="form-control" id="txtSenha" name="txtSenha" required autocomplete="new-password" style="
+                width: 100%;
+                padding: 10px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+            ">
         </div>
-        <div class="form-group hidden-group" id="divPerfil">
-            <label for="perfil" style="color: white">Perfil</label>
-            <select class="form-control" id="slcPerfil" name="slcPerfil" required></select>
+
+        <div class="form-group hidden-group" id="divPerfil" style="text-align: left; margin-bottom: 15px;">
+            <label for="perfil" style="color: white; font-weight: bold;">Perfil</label>
+            <select class="form-control" id="slcPerfil" name="slcPerfil" required style="
+                width: 100%;
+                padding: 10px;
+                border: none;
+                border-radius: 5px;
+                font-size: 16px;
+            "></select>
         </div>
-        <div id="divSpace" class="space"> </div>
-        <button type="submit" class="btn btn-light">Entrar</button>
-        <a href="#" id="btnEsqueciSenha" class="btn btn-light">Esqueci minha senha</a>
+
+        <div id="divSpace" class="space"></div>
+
+        <button type="submit" class="btn btn-light" style="
+            background-color: #ffc0cb;
+            color: #7a0149;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        ">Entrar</button>
+
+        <a href="#" id="btnEsqueciSenha" class="btn btn-light" style="
+            color: #7a0149;
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+            text-decoration: none;
+            font-size: 16px;
+        ">Esqueci minha senha</a>
     </form>
 </div>
 
@@ -50,7 +112,7 @@
                                 toastr.error("Nenhum perfil encontrado para este e-mail.", "Erro");
                             }
                         } else {
-                            $('#divEmailError').text('.').addClass('visible');
+                            $('#divEmailError').text('E-mail não encontrado.').addClass('visible');
                         }
                     }
                 });

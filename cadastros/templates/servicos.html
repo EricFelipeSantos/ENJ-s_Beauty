@@ -108,7 +108,16 @@
                     <a href="{% url 'cadastros:servicos'%}" class="btn btn-info" id="btnNovoServico" style="display: none;">
                         <img src="{% static 'img/create.png' %}" alt="Voltar ao modo de inclusão" width="20" height="20"> Voltar ao modo de inclusão
                     </a>
-                    <button type="submit" class="btn btn-#7a0149" name="btnAcao" id="btnAcao" value="novo_servico">Salvar Novo Serviço</button>
+                    <button type="submit" style="
+                    background-color: #7a0149;
+                    color: white;
+                    font-weight: bold;
+                    border: none;
+                    padding: 10px 20px;
+                    font-size: 12px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    transition: background 0.3s ease;" name="btnAcao" id="btnAcao" value="novo_servico">Salvar Novo Serviço</button>
                 </div>
             </div>
         </form>

@@ -17,28 +17,79 @@
     </style>
 </head>
 <body>
-<h2 style="color: white">Redefinir Senha</h2>
     
+    <div style="
+    background-color: #7a0149;
+    padding: 30px;
+    text-align: center;
+    border-radius: 10px;
+    width: 50%;
+    margin: auto;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+">
+    <h2 style="
+        color: white;
+        font-size: 28px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #ffc0cb;
+        display: inline-block;
+    ">
+        Redefinir Senha
+    </h2>
+
     {% if valid_token %}
-    <form method="post" id="resetForm">
+    <form method="post" id="resetForm" style="margin-top: 20px;">
         {% csrf_token %}
 
-        <div>
-        <label for="nova_senha" style="color: white">Nova Senha:</label>
-        <input type="password" name="nova_senha" id="nova_senha" required>
+        <div style="margin-bottom: 15px; text-align: left;">
+            <label for="nova_senha" style="color: white; font-weight: bold;">Nova Senha:</label><br>
+            <input type="password" name="nova_senha" id="nova_senha" required style="
+                width: 100%;
+                padding: 10px;
+                margin-top: 5px;
+                border: none;
+                border-radius: 5px;
+                background-color: #fff;
+                font-size: 16px;
+            ">
         </div>
-        <div>
-        <br>
-        <label for="confirmar_senha" style="color: white">Confirmar Senha:</label>
-        <input type="password" id="confirmar_senha" required>
-        </div>
-        <p id="senha-erro" style="color: white">As senhas não coincidem!</p>
 
-        <button type="submit" id="submit-btn" style="color: white" disabled>Redefinir</button>
+        <div style="margin-bottom: 15px; text-align: left;">
+            <label for="confirmar_senha" style="color: white; font-weight: bold;">Confirmar Senha:</label><br>
+            <input type="password" id="confirmar_senha" required style="
+                width: 100%;
+                padding: 10px;
+                margin-top: 5px;
+                border: none;
+                border-radius: 5px;
+                background-color: #fff;
+                font-size: 16px;
+            ">
+        </div>
+
+        <p id="senha-erro" style="color: #ffc0cb; font-weight: bold; display: none;">As senhas não coincidem!</p>
+
+        <button type="submit" id="submit-btn" class="btn btn-light" disabled style="
+            background-color: #ffc0cb;
+            color: #7a0149;
+            font-weight: bold;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: not-allowed;
+        ">Redefinir</button>
     </form>
     {% else %}
-    <p>O link de redefinição de senha é inválido ou expirou.</p>
+    <p style="color: white; font-size: 18px; font-weight: bold; margin-top: 20px;">
+        O link de redefinição de senha é inválido ou expirou.
+    </p>
     {% endif %}
+</div>
+
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
